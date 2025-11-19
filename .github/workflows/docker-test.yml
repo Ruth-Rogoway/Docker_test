@@ -20,10 +20,10 @@ jobs:
       uses: docker/setup-buildx-action@v2
 
     # 3️⃣ Build והרצת Docker Compose עם כל השירותים
-    - name: Run docker-compose
-      run: docker-compose up --build --abort-on-container-exit
+    - name: Run docker compose
+      run: docker compose up --build --abort-on-container-exit
 
     # 4️⃣ הצגת לוגים במקרה של כישלון
     - name: Show logs if failed
       if: failure()
-      run: docker-compose logs
+      run: docker compose logs
