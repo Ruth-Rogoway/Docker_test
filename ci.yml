@@ -1,0 +1,16 @@
+name: CI Simple Test
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  simple-print:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Print message
+        run: echo "Push detected to main branch!"
