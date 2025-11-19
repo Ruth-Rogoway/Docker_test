@@ -1,6 +1,6 @@
 name: Docker Compose Test
 
-# הפעלה על כל PUSH ל-main (או ענפים אחרים)
+
 on:
   push:
     branches: [ main ]
@@ -11,19 +11,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1️⃣ Checkout הקוד מה-Repo
+  
     - name: Checkout repository
       uses: actions/checkout@v3
 
-    # 2️⃣ Setup Docker Buildx (אפשרי אם יש multi-platform)
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
-    # 3️⃣ Build והרצת Docker Compose עם כל השירותים
     - name: Run docker compose
       run: docker compose up --build --abort-on-container-exit
 
-    # 4️⃣ הצגת לוגים במקרה של כישלון
+
     - name: Show logs if failed
       if: failure()
       run: docker compose logs
