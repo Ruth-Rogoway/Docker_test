@@ -1,62 +1,62 @@
+version: '3.9'
+
 services:
-  app:
-    image: flask_app:latest
-    container_name: flask_app
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: server.Dockerfile
-    environment:
-      # set database credentials
-      DB_HOST: mysql
-      DB_NAME: flask
-      DB_USER: flask
-      DB_PASSWORD: password
-
-    links:
-      # network connection with these services
-      - mysql
-    depends_on:
-      # build those images first
-      - mysql
-    ports:
-      # bind on our 5000 port because most people have 80, 8080 already bound
-      - "5001:5000"
-
   mysql:
+    image: mysql:8
     container_name: mysql
-    # let's grab from mysql 5.7 image
-    image: mysql
-    volumes:
-        # pass volume named mysql-data to mysql container
-      - mysql-data:/var/lib/mysql
-      - ./db/mysqld.cnf:/etc/mysql/mysql.conf.d/mysqld.cnf
-    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345
+      MYSQL_DATABASE: dbtodo
     ports:
       - "3306:3306"
-      # credentials
+    networks:
+      - todo-net
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  web:
+    build: .
+    container_name: flask-todo
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: flask
-      MYSQL_USER: flask
-      MYSQL_PASSWORD: password
+      DB_USER: root
+      DB_PASSWORD: 12345
+      DB_HOST: mysql
+      DB_NAME: dbtodo
+      FLASK_ENV: development
+    ports:
+      - "5000:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - todo-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
 
   test:
-    image: flask_test:latest
-    container_name: flask_test
-    restart: unless-stopped
     build:
       context: .
       dockerfile: test.Dockerfile
-    links:
-      # network connection with these services
-      - app
+    container_name: flask-test
     depends_on:
-      # build those images first
-      - app
+      web:
+        condition: service_healthy
+    networks:
+      - todo-net
 
-# volumes definition here
+networks:
+  todo-net:
+    driver: bridge
+
 volumes:
-  # just a persistance data
-  mysql-data:
-    driver: local
+  db_data:
